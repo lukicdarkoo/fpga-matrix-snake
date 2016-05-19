@@ -1,0 +1,10 @@
+#	o_lcd_data(0) <= ser_clk;
+#	o_lcd_data(1) <= ser_data;
+#	o_lcd_data(2) <= ser_strobe;
+#	o_lcd_data(3) <= '0';
+
+NET Out_Clock   LOC = "W18" |  IOSTANDARD = "LVCMOS33";
+NET Out_Data  	 LOC = "V18" |  IOSTANDARD = "LVCMOS33";
+NET Out_Strobe   LOC = "D18" |  IOSTANDARD = "LVCMOS33";
+
+NET Out_Test_Led LOC = "N24"  |  IOSTANDARD = "LVCMOS33";

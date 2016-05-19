@@ -1,0 +1,10 @@
+-batch 
+-create led_map_peripheral 
+-ver 1.00.a 
+-dir "C:\materija\RA117-2013\RGB_LED" 
+-lang vhdl 
+-bus axi4lite s 
+-reg 32 
+-xps 
+-ise 
+-driver 

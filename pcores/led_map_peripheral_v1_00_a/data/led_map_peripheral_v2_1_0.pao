@@ -1,0 +1,10 @@
+##############################################################################
+## Filename:          C:/materija/RA117-2013/RGB_LED/pcores/led_map_peripheral_v1_00_a/data/led_map_peripheral_v2_1_0.pao
+## Description:       Peripheral Analysis Order
+## Date:              Mon May 09 17:42:32 2016 (by Create and Import Peripheral Wizard)
+##############################################################################
+
+lib proc_common_v3_00_a  all 
+lib axi_lite_ipif_v1_01_a  all 
+lib led_map_peripheral_v1_00_a user_logic vhdl
+lib led_map_peripheral_v1_00_a led_map_peripheral vhdl
