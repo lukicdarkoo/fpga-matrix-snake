@@ -32,12 +32,22 @@
  */
 
 #include <stdio.h>
+#include "xparameters.h"
+#include "xil_io.h"
 #include "platform.h"
 
 void print(char *str);
 
 int main()
 {
+
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR, 0x00);
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 4, 0x00);
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 8, 0x00);
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 12, 0x00);
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 16, 0x00);
+	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 20, 0x00);
+
     init_platform();
 
     print("Hello World\n\r");

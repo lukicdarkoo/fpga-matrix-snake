@@ -150,19 +150,9 @@ architecture IMP of user_logic is
 	signal led_ram : pixel_array_t(0 to 63);
 	
 	signal row_idx : std_logic_vector(3 downto 0);
+	signal decoded_row_idx : std_logic_vector(7 downto 0);
 	signal row : pixel_array_t(0 to 7);
-	signal row_o : pixel_array_t(0 to 7);
 	
-	--FREQUENCY DIVIDER
-	signal temporal: std_logic; 
-   signal counter : integer range 0 to 1000 := 0;
-	signal clk_internal : std_logic;
-	
-	-- SENDER
-	signal bit_index: integer range 0 to 31 := 0;
-	signal test_led: std_logic_vector(31 downto 0) := x"aaaaaaaa";
-
-
 	signal ser_clk : std_logic;
 	signal ser_data : std_logic;
 	signal ser_strobe : std_logic;
@@ -172,40 +162,13 @@ architecture IMP of user_logic is
 	signal ser_clk_falling_edge : std_logic;
 	signal ser_idx : std_logic_vector(4 downto 0);
 	signal ser_par_data : std_logic_vector(31 downto 0) := x"AAAAAAAA";--:= x"babadeda";--(others => '0');
+	
+	signal led_r: std_logic_vector(7 downto 0);
+	signal led_b: std_logic_vector(7 downto 0);
+	signal led_g: std_logic_vector(7 downto 0);
 begin
---	--FREQUENCY DIVIDER
---    frequency_divider: process (Bus2IP_Resetn, Bus2IP_Clk) begin
---        if (Bus2IP_Resetn = '1') then
---            temporal <= '0';
---            counter <= 0;
---        elsif rising_edge(Bus2IP_Clk) then
---            if (counter = 1000) then
---                temporal <= NOT(temporal);
---                counter <= 0;
---            else
---                counter <= counter + 1;
---            end if;
---        end if;
---    end process;
---    
---   clk_internal <= temporal;
---	--END FREQUENCY DIVIDER
---	
---	
---	-- BEGIN SENDER
---	Sender: process (clk_internal, Bus2IP_Resetn) begin
---		  if (Bus2IP_Resetn = '1') then
---            bit_index <= 0;
---		  elsif rising_edge(clk_internal) then
---				if (bit_index = 32) then
---					bit_index <= 0;
---				else 
---					bit_index <= bit_index + 1;
---				end if;
---        end if;
---	end process;
---	-- END SENDER
 
+	-- Clock Divider
 	process(Bus2IP_Clk) begin
 		if rising_edge(Bus2IP_Clk) then
 			if Bus2IP_Resetn = '0' then
@@ -221,6 +184,7 @@ begin
 	end process;
 	ser_half_clk <= '1' when ser_cnt = 1000/2-1 else '0'; -- 100kHz
 	
+	-- Generate ser_clk
 	process(Bus2IP_Clk) begin
 		if rising_edge(Bus2IP_Clk) then
 			if Bus2IP_Resetn = '0' then
@@ -235,6 +199,7 @@ begin
 	ser_clk_rising_edge <= ser_half_clk and not ser_clk;
 	ser_clk_falling_edge <= ser_half_clk and ser_clk;
 	
+	-- Serializer
 	process(Bus2IP_Clk) begin
 		if rising_edge(Bus2IP_Clk) then
 			if Bus2IP_Resetn = '0' then
@@ -243,6 +208,12 @@ begin
 				if ser_clk_falling_edge = '1' then
 					if ser_idx = ser_par_data'length-1 then
 						ser_idx <= (others => '0');
+						
+						-- Increment row
+						row_idx <= row_idx + 1;
+						if (row_idx = 8) then
+							row_idx <= (others => '0');
+						end if;
 					else
 						ser_idx <= ser_idx + 1;
 					end if;
@@ -250,24 +221,30 @@ begin
 			end if;
 		end if;
 	end process;
-	
+
 	ser_data <= ser_par_data(conv_integer(ser_idx));
 	ser_strobe <= '1' when ser_idx = 0 and ser_clk = '0' else '0';
 	
-	
+   row <= led_ram(conv_integer(row_idx)*8 to conv_integer(row_idx)*8+7);
+	led_r <= row(0)(0) & row(1)(0) & row(2)(0) & row(3)(0) & row(4)(0) & row(5)(0) & row(6)(0) & row(7)(0);
+	led_g <= row(0)(1) & row(1)(1) & row(2)(1) & row(3)(1) & row(4)(1) & row(5)(1) & row(6)(1) & row(7)(1);
+	led_b <= row(0)(2) & row(1)(2) & row(2)(2) & row(3)(2) & row(4)(2) & row(5)(2) & row(6)(2) & row(7)(2);
+
+	decoded_row_idx <= "00000001" when conv_integer(row_idx) = 0 else
+						"00000010" when conv_integer(row_idx) = 1 else
+						"00000100" when conv_integer(row_idx) = 2 else
+						"00001000" when conv_integer(row_idx) = 3 else
+						"00010000" when conv_integer(row_idx) = 4 else
+						"00100000" when conv_integer(row_idx) = 5 else
+						"01000000" when conv_integer(row_idx) = 6 else
+						"10000000" when conv_integer(row_idx) = 7 else
+						"00000000";
+
 	Out_Data <= ser_data;
 	Out_Strobe <= ser_strobe;
 	Out_Clock <= ser_clk;
+	ser_par_data <= decoded_row_idx & led_r & led_g & led_b;
 	
-	Out_Test_Led <= '1';
-	
-	
-   --row <= led_ram(conv_integer(row_idx)*8 to conv_integer(row_idx)*8+7);
-	
-	--row_o <= row;
-	
-	--row2(0)(1) & row2(1)(1) & row2(2)(1)
-
   -- implement slave model software accessible register(s)
   SLAVE_REG_WRITE_PROC : process( Bus2IP_Clk ) is
   begin
