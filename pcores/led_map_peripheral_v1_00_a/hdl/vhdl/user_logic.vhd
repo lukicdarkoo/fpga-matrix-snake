@@ -142,10 +142,6 @@ end entity user_logic;
 architecture IMP of user_logic is
 
   --USER signal declarations added here, as needed for user logic
-
-	type state_types is (IDLE, ROW1, ROW2, ROW3, ROW4, ROW5, ROW6, ROW7, ROW8);
-	signal state : state_types;
-	 
 	type pixel_array_t is array (natural range<>) of std_logic_vector(2 downto 0);
 	signal led_ram : pixel_array_t(0 to 63);
 	
@@ -230,20 +226,22 @@ begin
 	led_g <= row(0)(1) & row(1)(1) & row(2)(1) & row(3)(1) & row(4)(1) & row(5)(1) & row(6)(1) & row(7)(1);
 	led_b <= row(0)(2) & row(1)(2) & row(2)(2) & row(3)(2) & row(4)(2) & row(5)(2) & row(6)(2) & row(7)(2);
 
-	decoded_row_idx <= "00000001" when conv_integer(row_idx) = 0 else
-						"00000010" when conv_integer(row_idx) = 1 else
-						"00000100" when conv_integer(row_idx) = 2 else
-						"00001000" when conv_integer(row_idx) = 3 else
-						"00010000" when conv_integer(row_idx) = 4 else
-						"00100000" when conv_integer(row_idx) = 5 else
-						"01000000" when conv_integer(row_idx) = 6 else
-						"10000000" when conv_integer(row_idx) = 7 else
-						"00000000";
+	decoded_row_idx <= "00000001" when row_idx = 0 else
+						"00000010" when row_idx = 1 else
+						"00000100" when row_idx = 2 else
+						"00001000" when row_idx = 3 else
+						"00010000" when row_idx = 4 else
+						"00100000" when row_idx = 5 else
+						"01000000" when row_idx = 6 else
+						"10000000";
+						
+	
 
+	ser_par_data <= decoded_row_idx & led_r & led_g & led_b;
+	
 	Out_Data <= ser_data;
 	Out_Strobe <= ser_strobe;
 	Out_Clock <= ser_clk;
-	ser_par_data <= decoded_row_idx & led_r & led_g & led_b;
 	
   -- implement slave model software accessible register(s)
   SLAVE_REG_WRITE_PROC : process( Bus2IP_Clk ) is
@@ -251,8 +249,9 @@ begin
     if Bus2IP_Clk'event and Bus2IP_Clk = '1' then
       if Bus2IP_Resetn = '0' then
 			led_ram <= (others => (others => '0'));
-      elsif Bus2IP_RNW = '0' and Bus2IP_CS(0) = '1' then
-			led_ram(conv_integer(Bus2IP_Addr)) <= Bus2IP_Data(2 downto 0);
+      --elsif Bus2IP_RNW = '0' and Bus2IP_CS(0) = '1' then
+      else
+			led_ram(conv_integer(Bus2IP_Addr(0 to 15))) <= Bus2IP_Data(2 downto 0);
       end if;
     end if;
 
@@ -261,7 +260,7 @@ begin
   -- implement slave model software accessible register(s) read mux
   SLAVE_REG_READ_PROC : process( Bus2IP_Addr, led_ram ) is
   begin
-		IP2Bus_Data <= "00000000000000000000000000000" & led_ram(conv_integer(Bus2IP_Addr));
+		IP2Bus_Data <= "10000000000000000000000000000" & led_ram(conv_integer(Bus2IP_Addr(0 to 15)));
   end process SLAVE_REG_READ_PROC;
 
 

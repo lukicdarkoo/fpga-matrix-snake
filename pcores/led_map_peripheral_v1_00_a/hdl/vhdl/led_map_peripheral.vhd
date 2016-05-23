@@ -59,18 +59,10 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
-library proc_common_v3_00_a;
-use proc_common_v3_00_a.proc_common_pkg.all;
-use proc_common_v3_00_a.ipif_pkg.all;
 
-library axi_lite_ipif_v1_01_a;
-use axi_lite_ipif_v1_01_a.axi_lite_ipif;
-
-library led_map_peripheral_v1_00_a;
-use led_map_peripheral_v1_00_a.user_logic;
 
 ------------------------------------------------------------------------------
 -- Entity section
@@ -183,160 +175,178 @@ end entity led_map_peripheral;
 
 architecture IMP of led_map_peripheral is
 
-  constant USER_SLV_DWIDTH                : integer              := C_S_AXI_DATA_WIDTH;
 
-  constant IPIF_SLV_DWIDTH                : integer              := C_S_AXI_DATA_WIDTH;
-
-  constant ZERO_ADDR_PAD                  : std_logic_vector(0 to 31) := (others => '0');
-  constant USER_SLV_BASEADDR              : std_logic_vector     := C_BASEADDR;
-  constant USER_SLV_HIGHADDR              : std_logic_vector     := C_HIGHADDR;
-
-  constant IPIF_ARD_ADDR_RANGE_ARRAY      : SLV64_ARRAY_TYPE     := 
-    (
-      ZERO_ADDR_PAD & USER_SLV_BASEADDR,  -- user logic slave space base address
-      ZERO_ADDR_PAD & USER_SLV_HIGHADDR   -- user logic slave space high address
-    );
-
-  constant USER_SLV_NUM_REG               : integer              := 32;
-  constant USER_NUM_REG                   : integer              := USER_SLV_NUM_REG;
-  constant TOTAL_IPIF_CE                  : integer              := USER_NUM_REG;
-
-  constant IPIF_ARD_NUM_CE_ARRAY          : INTEGER_ARRAY_TYPE   := 
-    (
-      0  => (USER_SLV_NUM_REG)            -- number of ce for user logic slave space
-    );
-
-  ------------------------------------------
-  -- Index for CS/CE
-  ------------------------------------------
-  constant USER_SLV_CS_INDEX              : integer              := 0;
-  constant USER_SLV_CE_INDEX              : integer              := calc_start_ce_index(IPIF_ARD_NUM_CE_ARRAY, USER_SLV_CS_INDEX);
-
-  constant USER_CE_INDEX                  : integer              := USER_SLV_CE_INDEX;
-
-  ------------------------------------------
-  -- IP Interconnect (IPIC) signal declarations
-  ------------------------------------------
-  signal ipif_Bus2IP_Clk                : std_logic;
-  signal ipif_Bus2IP_Resetn             : std_logic;
-  signal ipif_Bus2IP_Addr               : std_logic_vector(C_S_AXI_ADDR_WIDTH-1 downto 0);
-  signal ipif_Bus2IP_RNW                : std_logic;
-  signal ipif_Bus2IP_BE                 : std_logic_vector(IPIF_SLV_DWIDTH/8-1 downto 0);
-  signal ipif_Bus2IP_CS                 : std_logic_vector((IPIF_ARD_ADDR_RANGE_ARRAY'LENGTH)/2-1 downto 0);
-  signal ipif_Bus2IP_RdCE               : std_logic_vector(calc_num_ce(IPIF_ARD_NUM_CE_ARRAY)-1 downto 0);
-  signal ipif_Bus2IP_WrCE               : std_logic_vector(calc_num_ce(IPIF_ARD_NUM_CE_ARRAY)-1 downto 0);
-  signal ipif_Bus2IP_Data               : std_logic_vector(IPIF_SLV_DWIDTH-1 downto 0);
-  signal ipif_IP2Bus_WrAck              : std_logic;
-  signal ipif_IP2Bus_RdAck              : std_logic;
-  signal ipif_IP2Bus_Error              : std_logic;
-  signal ipif_IP2Bus_Data               : std_logic_vector(IPIF_SLV_DWIDTH-1 downto 0);
-  signal user_Bus2IP_RdCE               : std_logic_vector(USER_NUM_REG-1 downto 0);
-  signal user_Bus2IP_WrCE               : std_logic_vector(USER_NUM_REG-1 downto 0);
-  signal user_IP2Bus_Data               : std_logic_vector(USER_SLV_DWIDTH-1 downto 0);
-  signal user_IP2Bus_RdAck              : std_logic;
-  signal user_IP2Bus_WrAck              : std_logic;
-  signal user_IP2Bus_Error              : std_logic;
-  
+	-- AXI stuff.
+	constant BASE_ADDR : signed(C_S_AXI_ADDR_WIDTH-1 downto 0) := signed(C_BASEADDR);
+	subtype t_addr is signed(C_S_AXI_ADDR_WIDTH-1 downto 2);
+	subtype t_word is std_logic_vector(C_S_AXI_DATA_WIDTH-1 downto 0);
+	constant ADDR_WIDTH : natural := 6;
+	
+	
+	signal accept_write     : std_logic;
+	signal r_write_response : std_logic;
+	
+	signal local_write_addr : t_addr;
+	signal write_regs_en    : boolean;
+	signal we_en : std_logic;
+	
+	
+	-- LED stuff.
+	type pixel_array_t is array (natural range<>) of std_logic_vector(2 downto 0);
+	signal led_ram : pixel_array_t(0 to 63);
+	
+	signal row_idx : std_logic_vector(2 downto 0);
+	signal decoded_row_idx : std_logic_vector(7 downto 0);
+	signal row : pixel_array_t(0 to 7);
+	
+	signal ser_clk : std_logic;
+	signal ser_data : std_logic;
+	signal ser_strobe : std_logic;
+	signal ser_cnt : std_logic_vector(15 downto 0);
+	signal ser_half_clk : std_logic;
+	signal ser_clk_rising_edge : std_logic;
+	signal ser_clk_falling_edge : std_logic;
+	signal ser_idx : std_logic_vector(4 downto 0);
+	signal ser_par_data : std_logic_vector(31 downto 0) := x"AAAAAAAA";--:= x"babadeda";--(others => '0');
+	
+	signal led_r: std_logic_vector(7 downto 0);
+	signal led_b: std_logic_vector(7 downto 0);
+	signal led_g: std_logic_vector(7 downto 0);	
 begin
+
+	-- Read transaction.
+    S_AXI_ARREADY <= '0';
+    S_AXI_RDATA <= (others => '0');
+    S_AXI_RRESP <= (others => '0');
+    S_AXI_RVALID <= '0';
+	 
+	 
+
+	-- Write transaction.
+	
+	-- When both valid signals are asserted and response is not in progress
+	-- then say valid to master, write data and give response.
+	
+	accept_write <= S_AXI_AWVALID and S_AXI_WVALID and not r_write_response;
+	S_AXI_AWREADY <= accept_write;
+	S_AXI_WREADY <= accept_write;
+	
+	local_write_addr <= signed(S_AXI_AWADDR(t_addr'range)) - BASE_ADDR(t_addr'range);
+	write_regs_en <= accept_write = '1' and local_write_addr(t_addr'left downto ADDR_WIDTH+2) = 0;
+	we_en <= '1' when write_regs_en else '0';
+
+	write_regs: process(S_AXI_ACLK)
+	begin
+		if rising_edge(S_AXI_ACLK) then
+			if S_AXI_ARESETN = '0' then
+				--r_regs <= (others => (others => '0'));
+				r_write_response <= '0';
+			else
+				if accept_write = '1' then
+					r_write_response <= '1';
+				else
+					if S_AXI_BREADY = '1' then
+						r_write_response <= '0';
+					end if;
+				end if;
+			end if;
+		end if;
+	end process write_regs;
+	
+	S_AXI_BRESP  <= "00"; -- Always OK response.
+	S_AXI_BVALID <= r_write_response;
+
+
+	-- Writing to map.
+	process(S_AXI_ACLK) begin
+		if rising_edge(S_AXI_ACLK) then
+			if S_AXI_ARESETN = '0' then
+				led_ram <= (others => (others => '0'));
+			else
+				if we_en = '1' then
+					led_ram(to_integer(local_write_addr(ADDR_WIDTH+1 downto 2))) <= S_AXI_WDATA(2 downto 0);
+				end if;
+			end if;
+		end if;
+	end process;
+
+
+	-- LED Stuff.
+
+	-- Clock Divider
+	process(S_AXI_ACLK) begin
+		if rising_edge(S_AXI_ACLK) then
+			if S_AXI_ARESETN = '0' then
+				ser_cnt <= (others => '0');
+			else
+				if ser_half_clk = '1' then
+					ser_cnt <= (others => '0');
+				else
+					ser_cnt <= ser_cnt+1;
+				end if;
+			end if;
+		end if;
+	end process;
+	ser_half_clk <= '1' when ser_cnt = 1000/2-1 else '0'; -- 100kHz
+	
+	-- Generate ser_clk
+	process(S_AXI_ACLK) begin
+		if rising_edge(S_AXI_ACLK) then
+			if S_AXI_ARESETN = '0' then
+				ser_clk <= '0';
+			else
+				if ser_half_clk = '1' then
+					ser_clk <= not ser_clk;
+				end if;
+			end if;
+		end if;
+	end process;
+	ser_clk_rising_edge <= ser_half_clk and not ser_clk;
+	ser_clk_falling_edge <= ser_half_clk and ser_clk;
+	
+	-- Serializer
+	process(S_AXI_ACLK) begin
+		if rising_edge(S_AXI_ACLK) then
+			if S_AXI_ARESETN = '0' then
+				ser_idx <= (others => '0');
+				row_idx <= (others => '0');
+			else
+				if ser_clk_falling_edge = '1' then
+					if ser_idx = ser_par_data'length-1 then
+						ser_idx <= (others => '0');
+						
+						row_idx <= row_idx + 1;
+					else
+						ser_idx <= ser_idx + 1;
+					end if;
+				end if;
+			end if;
+		end if;
+	end process;
+
+	ser_data <= ser_par_data(conv_integer(ser_idx));
+	ser_strobe <= '1' when ser_idx = 0 and ser_clk = '0' else '0';
+	
+   row <= led_ram(conv_integer(row_idx)*8 to conv_integer(row_idx)*8+7);
+	led_r <= row(0)(0) & row(1)(0) & row(2)(0) & row(3)(0) & row(4)(0) & row(5)(0) & row(6)(0) & row(7)(0);
+	led_g <= row(0)(1) & row(1)(1) & row(2)(1) & row(3)(1) & row(4)(1) & row(5)(1) & row(6)(1) & row(7)(1);
+	led_b <= row(0)(2) & row(1)(2) & row(2)(2) & row(3)(2) & row(4)(2) & row(5)(2) & row(6)(2) & row(7)(2);
+
+	decoded_row_idx <= "00000001" when row_idx = 0 else
+						"00000010" when row_idx = 1 else
+						"00000100" when row_idx = 2 else
+						"00001000" when row_idx = 3 else
+						"00010000" when row_idx = 4 else
+						"00100000" when row_idx = 5 else
+						"01000000" when row_idx = 6 else
+						"10000000";
+						
 	
 
-  ------------------------------------------
-  -- instantiate axi_lite_ipif
-  ------------------------------------------
-  AXI_LITE_IPIF_I : entity axi_lite_ipif_v1_01_a.axi_lite_ipif
-    generic map
-    (
-      C_S_AXI_DATA_WIDTH             => IPIF_SLV_DWIDTH,
-      C_S_AXI_ADDR_WIDTH             => C_S_AXI_ADDR_WIDTH,
-      C_S_AXI_MIN_SIZE               => C_S_AXI_MIN_SIZE,
-      C_USE_WSTRB                    => C_USE_WSTRB,
-      C_DPHASE_TIMEOUT               => C_DPHASE_TIMEOUT,
-      C_ARD_ADDR_RANGE_ARRAY         => IPIF_ARD_ADDR_RANGE_ARRAY,
-      C_ARD_NUM_CE_ARRAY             => IPIF_ARD_NUM_CE_ARRAY,
-      C_FAMILY                       => C_FAMILY
-    )
-    port map
-    (
-      S_AXI_ACLK                     => S_AXI_ACLK,
-      S_AXI_ARESETN                  => S_AXI_ARESETN,
-      S_AXI_AWADDR                   => S_AXI_AWADDR,
-      S_AXI_AWVALID                  => S_AXI_AWVALID,
-      S_AXI_WDATA                    => S_AXI_WDATA,
-      S_AXI_WSTRB                    => S_AXI_WSTRB,
-      S_AXI_WVALID                   => S_AXI_WVALID,
-      S_AXI_BREADY                   => S_AXI_BREADY,
-      S_AXI_ARADDR                   => S_AXI_ARADDR,
-      S_AXI_ARVALID                  => S_AXI_ARVALID,
-      S_AXI_RREADY                   => S_AXI_RREADY,
-      S_AXI_ARREADY                  => S_AXI_ARREADY,
-      S_AXI_RDATA                    => S_AXI_RDATA,
-      S_AXI_RRESP                    => S_AXI_RRESP,
-      S_AXI_RVALID                   => S_AXI_RVALID,
-      S_AXI_WREADY                   => S_AXI_WREADY,
-      S_AXI_BRESP                    => S_AXI_BRESP,
-      S_AXI_BVALID                   => S_AXI_BVALID,
-      S_AXI_AWREADY                  => S_AXI_AWREADY,
-      Bus2IP_Clk                     => ipif_Bus2IP_Clk,
-      Bus2IP_Resetn                  => ipif_Bus2IP_Resetn,
-      Bus2IP_Addr                    => ipif_Bus2IP_Addr,
-      Bus2IP_RNW                     => ipif_Bus2IP_RNW,
-      Bus2IP_BE                      => ipif_Bus2IP_BE,
-      Bus2IP_CS                      => ipif_Bus2IP_CS,
-      Bus2IP_RdCE                    => ipif_Bus2IP_RdCE,
-      Bus2IP_WrCE                    => ipif_Bus2IP_WrCE,
-      Bus2IP_Data                    => ipif_Bus2IP_Data,
-      IP2Bus_WrAck                   => ipif_IP2Bus_WrAck,
-      IP2Bus_RdAck                   => ipif_IP2Bus_RdAck,
-      IP2Bus_Error                   => ipif_IP2Bus_Error,
-      IP2Bus_Data                    => ipif_IP2Bus_Data
-    );
-
-  ------------------------------------------
-  -- instantiate User Logic
-  ------------------------------------------
-  USER_LOGIC_I : entity led_map_peripheral_v1_00_a.user_logic
-    generic map
-    (
-      -- MAP USER GENERICS BELOW THIS LINE ---------------
-      --USER generics mapped here
-      -- MAP USER GENERICS ABOVE THIS LINE ---------------
-
-      C_NUM_REG                      => USER_NUM_REG,
-      C_SLV_DWIDTH                   => USER_SLV_DWIDTH
-    )
-    port map
-    (
-      -- MAP USER PORTS BELOW THIS LINE ------------------
-		Out_Clock 							=> Out_Clock,
-		Out_Data 							=> Out_Data,
-		Out_Strobe 							=> Out_Strobe,
-		Out_Test_Led 						=> Out_Test_Led,
-      -- MAP USER PORTS ABOVE THIS LINE ------------------
-
-      Bus2IP_Clk                     => ipif_Bus2IP_Clk,
-      Bus2IP_Resetn                  => ipif_Bus2IP_Resetn,
-      Bus2IP_Addr                    => ipif_Bus2IP_Addr,
-      Bus2IP_CS                      => ipif_Bus2IP_CS,
-      Bus2IP_RNW                     => ipif_Bus2IP_RNW,
-      Bus2IP_Data                    => ipif_Bus2IP_Data,
-      Bus2IP_BE                      => ipif_Bus2IP_BE,
-      Bus2IP_RdCE                    => user_Bus2IP_RdCE,
-      Bus2IP_WrCE                    => user_Bus2IP_WrCE,
-      IP2Bus_Data                    => user_IP2Bus_Data,
-      IP2Bus_RdAck                   => user_IP2Bus_RdAck,
-      IP2Bus_WrAck                   => user_IP2Bus_WrAck,
-      IP2Bus_Error                   => user_IP2Bus_Error
-    );
-
-  ------------------------------------------
-  -- connect internal signals
-  ------------------------------------------
-  ipif_IP2Bus_Data <= user_IP2Bus_Data;
-  ipif_IP2Bus_WrAck <= user_IP2Bus_WrAck;
-  ipif_IP2Bus_RdAck <= user_IP2Bus_RdAck;
-  ipif_IP2Bus_Error <= user_IP2Bus_Error;
-
-  user_Bus2IP_RdCE <= ipif_Bus2IP_RdCE(USER_NUM_REG-1 downto 0);
-  user_Bus2IP_WrCE <= ipif_Bus2IP_WrCE(USER_NUM_REG-1 downto 0);
-
+	ser_par_data <= not(decoded_row_idx & led_r & led_g & led_b);
+	
+	Out_Data <= ser_data;
+	Out_Strobe <= ser_strobe;
+	Out_Clock <= ser_clk;
+	
 end IMP;

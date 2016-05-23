@@ -19,6 +19,8 @@
  PORT Out_Data_pin = led_map_peripheral_0_Out_Data, DIR = O
  PORT Out_Strobe_pin = led_map_peripheral_0_Out_Strobe, DIR = O
  PORT Out_Clock_pin = led_map_peripheral_0_Out_Clock, DIR = O
+ PORT RS232_RX_pin = RS232_RX, DIR = I
+ PORT RS232_TX_pin = RS232_TX, DIR = O
 
 
 BEGIN proc_sys_reset
@@ -47,7 +49,7 @@ BEGIN lmb_bram_if_cntlr
  PARAMETER C_BASEADDR = 0x00000000
  PARAMETER C_HIGHADDR = 0x00001fff
  BUS_INTERFACE SLMB = microblaze_0_ilmb
- BUS_INTERFACE BRAM_PORT = microblaze_0_i_bram_ctrl_2_microblaze_0_bram_block
+ BUS_INTERFACE BRAM_PORT = microblaze_0_i_bram_ctrl_BRAM_PORT
 END
 
 BEGIN lmb_v10
@@ -63,14 +65,14 @@ BEGIN lmb_bram_if_cntlr
  PARAMETER C_BASEADDR = 0x00000000
  PARAMETER C_HIGHADDR = 0x00001fff
  BUS_INTERFACE SLMB = microblaze_0_dlmb
- BUS_INTERFACE BRAM_PORT = microblaze_0_d_bram_ctrl_2_microblaze_0_bram_block
+ BUS_INTERFACE BRAM_PORT = microblaze_0_d_bram_ctrl_BRAM_PORT
 END
 
 BEGIN bram_block
  PARAMETER INSTANCE = microblaze_0_bram_block
  PARAMETER HW_VER = 1.00.a
- BUS_INTERFACE PORTA = microblaze_0_i_bram_ctrl_2_microblaze_0_bram_block
- BUS_INTERFACE PORTB = microblaze_0_d_bram_ctrl_2_microblaze_0_bram_block
+ BUS_INTERFACE PORTA = microblaze_0_i_bram_ctrl_BRAM_PORT
+ BUS_INTERFACE PORTB = microblaze_0_d_bram_ctrl_BRAM_PORT
 END
 
 BEGIN microblaze
@@ -168,5 +170,17 @@ BEGIN led_map_peripheral
  PORT Out_Data = led_map_peripheral_0_Out_Data
  PORT Out_Strobe = led_map_peripheral_0_Out_Strobe
  PORT Out_Clock = led_map_peripheral_0_Out_Clock
+END
+
+BEGIN axi_uartlite
+ PARAMETER INSTANCE = RS232
+ PARAMETER HW_VER = 1.02.a
+ PARAMETER C_ODD_PARITY = 1
+ PARAMETER C_BASEADDR = 0x40600000
+ PARAMETER C_HIGHADDR = 0x4060ffff
+ BUS_INTERFACE S_AXI = axi4lite_0
+ PORT S_AXI_ACLK = clk_100_0000MHz
+ PORT RX = RS232_RX
+ PORT TX = RS232_TX
 END
 

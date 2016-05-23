@@ -40,13 +40,17 @@ void print(char *str);
 
 int main()
 {
+	int i;
 
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR, 0x00);
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 4, 0x00);
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 8, 0x00);
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 12, 0x00);
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 16, 0x00);
-	Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + 20, 0x00);
+	/*
+	for(i = 0; i < 64; i++) {
+		Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + i * 4, i % 8);
+	}
+	*/
+
+	for(i = 0; i < 64; i++) {
+		Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + i * 4, i / 8);
+	}
 
     init_platform();
 
