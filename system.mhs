@@ -94,6 +94,7 @@ BEGIN microblaze
  BUS_INTERFACE DLMB = microblaze_0_dlmb
  BUS_INTERFACE M_AXI_DP = axi4lite_0
  BUS_INTERFACE DEBUG = microblaze_0_debug
+ BUS_INTERFACE INTERRUPT = IRQ_JOY_INTERRUPT
  PORT MB_RESET = proc_sys_reset_0_MB_Reset
  PORT CLK = clk_100_0000MHz
 END
@@ -170,6 +171,7 @@ BEGIN led_map_peripheral
  PORT Out_Data = led_map_peripheral_0_Out_Data
  PORT Out_Strobe = led_map_peripheral_0_Out_Strobe
  PORT Out_Clock = led_map_peripheral_0_Out_Clock
+ PORT Out_IRQ = led_map_peripheral_0_Out_IRQ
 END
 
 BEGIN axi_uartlite
@@ -182,5 +184,16 @@ BEGIN axi_uartlite
  PORT S_AXI_ACLK = clk_100_0000MHz
  PORT RX = RS232_RX
  PORT TX = RS232_TX
+END
+
+BEGIN axi_intc
+ PARAMETER INSTANCE = axi_intc_0
+ PARAMETER HW_VER = 1.04.a
+ PARAMETER C_BASEADDR = 0x41200000
+ PARAMETER C_HIGHADDR = 0x4120ffff
+ BUS_INTERFACE S_AXI = axi4lite_0
+ BUS_INTERFACE INTERRUPT = IRQ_JOY_INTERRUPT
+ PORT S_AXI_ACLK = clk_100_0000MHz
+ PORT Intr = led_map_peripheral_0_Out_IRQ
 END
 

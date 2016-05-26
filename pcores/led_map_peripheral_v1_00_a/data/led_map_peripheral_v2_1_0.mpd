@@ -59,5 +59,6 @@ PORT S_AXI_AWREADY = AWREADY, DIR = O, BUS = S_AXI
 PORT Out_Data = "", DIR = O
 PORT Out_Strobe = "", DIR = O
 PORT Out_Clock = "", DIR = O
+PORT Out_IRQ = "", DIR = O, SIGIS = INTERRUPT, SENSITIVITY = EDGE_RISING
 
 END

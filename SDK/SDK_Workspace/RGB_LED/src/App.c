@@ -35,26 +35,47 @@
 #include "xparameters.h"
 #include "xil_io.h"
 #include "platform.h"
+#include "API.h"
+#include "Snake.h"
 
-void print(char *str);
-
-int main()
-{
-	int i;
-
-	/*
-	for(i = 0; i < 64; i++) {
-		Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + i * 4, i % 8);
-	}
-	*/
-
-	for(i = 0; i < 64; i++) {
-		Xil_Out32(XPAR_LED_MAP_PERIPHERAL_0_BASEADDR + i * 4, i / 8);
-	}
-
+int main() {
     init_platform();
 
-    print("Hello World\n\r");
+
+    SetGameStage(STAGE_PLAY);
+
+	unsigned int timer = 0;
+	while (1) {
+		if (timer == 100) {
+			timer = 0;
+			UpdateTerrain();
+		} else {
+			timer++;
+		}
+
+
+		switch (GetJOY()) {
+		case JOY_DOWN:
+			direction = DIRECTION_UP;
+			break;
+		case JOY_UP:
+			direction = DIRECTION_DOWN;
+			break;
+		case JOY_RIGHT:
+			direction = DIRECTION_LEFT;
+			break;
+		case JOY_LEFT:
+			direction = DIRECTION_RIGHT;
+			break;
+
+		case JOY_SELECT:
+			SetGameStage(STAGE_PLAY);
+			break;
+		}
+
+		Pause(100);
+	}
+
 
     return 0;
 }

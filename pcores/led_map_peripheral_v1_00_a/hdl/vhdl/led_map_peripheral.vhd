@@ -132,9 +132,8 @@ entity led_map_peripheral is
 	 Out_Data	: out std_logic;
 	 Out_Strobe : out std_logic;
 	 Out_Clock : out std_logic;
-	 
-	 -- TODO: Delete tests
-	 Out_Test_Led : out std_logic;
+	 Out_IRQ : out std_logic;
+
     -- ADD USER PORTS ABOVE THIS LINE ------------------
 
     -- DO NOT EDIT BELOW THIS LINE ---------------------
@@ -212,6 +211,8 @@ architecture IMP of led_map_peripheral is
 	signal led_r: std_logic_vector(7 downto 0);
 	signal led_b: std_logic_vector(7 downto 0);
 	signal led_g: std_logic_vector(7 downto 0);	
+	
+	signal s_joy_state: std_logic_vector(4 downto 0);
 begin
 
 	-- Read transaction.
@@ -310,11 +311,16 @@ begin
 			if S_AXI_ARESETN = '0' then
 				ser_idx <= (others => '0');
 				row_idx <= (others => '0');
+				Out_IRQ <= '0';
 			else
+				Out_IRQ <= '0';
 				if ser_clk_falling_edge = '1' then
 					if ser_idx = ser_par_data'length-1 then
 						ser_idx <= (others => '0');
 						
+						if row_idx = 7 then
+							Out_IRQ <= '1';
+						end if;
 						row_idx <= row_idx + 1;
 					else
 						ser_idx <= ser_idx + 1;
@@ -323,6 +329,8 @@ begin
 			end if;
 		end if;
 	end process;
+	
+
 
 	ser_data <= ser_par_data(conv_integer(ser_idx));
 	ser_strobe <= '1' when ser_idx = 0 and ser_clk = '0' else '0';
@@ -343,7 +351,7 @@ begin
 						
 	
 
-	ser_par_data <= not(decoded_row_idx & led_r & led_g & led_b);
+	ser_par_data <= not(decoded_row_idx & led_g & led_b & led_r);
 	
 	Out_Data <= ser_data;
 	Out_Strobe <= ser_strobe;
