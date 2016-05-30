@@ -344,10 +344,10 @@ begin
 						"00000010" when row_idx = 1 else
 						"00000100" when row_idx = 2 else
 						"00001000" when row_idx = 3 else
-						"00010000" when row_idx = 4 else
-						"00100000" when row_idx = 5 else
-						"01000000" when row_idx = 6 else
-						"10000000";
+						"10000000" when row_idx = 4 else
+						"01000000" when row_idx = 5 else
+						"00100000" when row_idx = 6 else
+						"00010000";
 						
 	
 

@@ -95,7 +95,7 @@ void SetGameStage(GameStage _stage) {
 		direction = DIRECTION_RIGHT;
 
 		// Food
-		food.color = BLUE;
+		food.color = rand() % 7 + 1;
 		food.x = 5;
 		food.y = 5;
 
@@ -115,8 +115,29 @@ void SetGameStage(GameStage _stage) {
 }
 
 void CreateFood() {
-	food.x = 1;
-	food.y = 7;
+	unsigned char i;
+
+	unsigned char found = 0;
+
+	unsigned char fx = rand() % 8;
+	unsigned char fy = rand() % 8;
+
+	while (!found) {
+		fx = rand() % 8;
+		fy = rand() % 8;
+		found = 1;
+		for (i = 0; i < snake.length; i++) {
+			if(fx == snake.pixels[i].x && fy == snake.pixels[i].y) {
+				found = 0;
+				break;
+			}
+		}
+
+	}
+
+	food.color = rand() % 7 + 1;
+	food.x = fx;
+	food.y = fy;
 }
 
 void GameEnd() {
@@ -130,3 +151,12 @@ void GameEnd() {
 		}
 	}
 }
+
+/*void ChangeColorSnake() {
+
+	unsigned char i;
+
+	for(i = 0; i < snake.length; i++) {
+		snake.pixels[i].color = food.color;
+	}
+}*/

@@ -2,6 +2,7 @@
 #define Snake_h
 
 #include "API.h"
+#include <stdlib.h>
 
 typedef enum Direction {
 	DIRECTION_LEFT,
@@ -32,5 +33,7 @@ void UpdateTerrain();
 void GameEnd();
 static void CreateFood();
 void SetGameStage(GameStage stage);
+void ChangeColorSnake();
+
 
 #endif

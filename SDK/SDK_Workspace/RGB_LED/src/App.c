@@ -41,12 +41,11 @@
 int main() {
     init_platform();
 
-
     SetGameStage(STAGE_PLAY);
 
 	unsigned int timer = 0;
 	while (1) {
-		if (timer == 100) {
+		if (timer == 10) {
 			timer = 0;
 			UpdateTerrain();
 		} else {
@@ -73,7 +72,7 @@ int main() {
 			break;
 		}
 
-		Pause(100);
+		Pause(300);
 	}
 
 
