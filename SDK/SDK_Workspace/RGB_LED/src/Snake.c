@@ -46,7 +46,7 @@ void UpdateTerrain() {
 		}
 		break;
 	case DIRECTION_RIGHT:
-		if (pixelHead.y == DISP_WIDTH - 1) {
+		if (pixelHead.x == DISP_WIDTH - 1) {
 			GameEnd();
 			return;
 		}
@@ -69,6 +69,8 @@ void UpdateTerrain() {
 	// Move tale. If it ate a food make it bigger else move.
 	if (pixelHead.x == food.x && pixelHead.y == food.y) {
 		snake.length++;
+		snake.pixels[snake.length - 1] = pixelHead;
+		ChangeColorSnake();
 		CreateFood();
 	}
 	else {
@@ -76,8 +78,8 @@ void UpdateTerrain() {
 		for (i = 0; i < snake.length - 1; i++) {
 			snake.pixels[i] = snake.pixels[i + 1];
 		}
+		snake.pixels[snake.length - 1] = pixelHead;
 	}
-	snake.pixels[snake.length - 1] = pixelHead;
 
 
 	// Print snake
@@ -102,10 +104,10 @@ void SetGameStage(GameStage _stage) {
 		// Snake
 		snake.pixels[0].x = 1;
 		snake.pixels[0].y = 1;
-		snake.pixels[0].color = RED;
+		snake.pixels[0].color = BLUE;
 		snake.pixels[1].x = 1;
 		snake.pixels[1].y = 1;
-		snake.pixels[1].color = RED;
+		snake.pixels[1].color = BLUE;
 		snake.length = 2;
 		break;
 	case STAGE_END:
@@ -118,9 +120,10 @@ void CreateFood() {
 	unsigned char i;
 
 	unsigned char found = 0;
-
-	unsigned char fx = rand() % 8;
-	unsigned char fy = rand() % 8;
+	unsigned char colorMatch = 0;
+	unsigned char fc;
+	unsigned char fx;
+	unsigned char fy;
 
 	while (!found) {
 		fx = rand() % 8;
@@ -135,7 +138,15 @@ void CreateFood() {
 
 	}
 
-	food.color = rand() % 7 + 1;
+	while(!colorMatch) {
+		fc = rand() % 7 + 1;
+		colorMatch = 1;
+		if(fc == food.color) {
+			colorMatch = 0;
+		}
+
+	}
+	food.color = fc;
 	food.x = fx;
 	food.y = fy;
 }
@@ -152,11 +163,11 @@ void GameEnd() {
 	}
 }
 
-/*void ChangeColorSnake() {
+void ChangeColorSnake() {
 
 	unsigned char i;
 
 	for(i = 0; i < snake.length; i++) {
 		snake.pixels[i].color = food.color;
 	}
-}*/
+}
