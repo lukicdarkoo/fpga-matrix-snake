@@ -24,6 +24,8 @@ typedef enum GameStage {
 	STAGE_END
 } GameStage;
 
+static char letters[LETTER_NUMBER] = {'s', 't', 'a', 'r', 't'};
+
 Snake snake;
 Pixel food;
 GameStage gameStage;
@@ -34,6 +36,6 @@ void GameEnd();
 static void CreateFood();
 void SetGameStage(GameStage stage);
 void ChangeColorSnake();
-
+GameStage GetGameStage();
 
 #endif

@@ -12,8 +12,6 @@ void UpdateTerrain() {
 	// Print food
 	SetPixelP(food);
 
-
-
 	// Define Snake's head position
 	Pixel pixelHead = snake.pixels[snake.length - 1];
 	switch (direction)
@@ -90,6 +88,10 @@ void UpdateTerrain() {
 
 void SetGameStage(GameStage _stage) {
 	switch (_stage) {
+	case STAGE_START:
+		gameStage = STAGE_START;
+		PrintLetters(letters, 1, 2);
+		break;
 	case STAGE_PLAY:
 		Clear();
 		gameStage = STAGE_PLAY;
@@ -130,21 +132,19 @@ void CreateFood() {
 		fy = rand() % 8;
 		found = 1;
 		for (i = 0; i < snake.length; i++) {
-			if(fx == snake.pixels[i].x && fy == snake.pixels[i].y) {
+			if (fx == snake.pixels[i].x && fy == snake.pixels[i].y) {
 				found = 0;
 				break;
 			}
 		}
-
 	}
 
-	while(!colorMatch) {
+	while (!colorMatch) {
 		fc = rand() % 7 + 1;
 		colorMatch = 1;
-		if(fc == food.color) {
+		if (fc == food.color) {
 			colorMatch = 0;
 		}
-
 	}
 	food.color = fc;
 	food.x = fx;
@@ -158,16 +158,22 @@ void GameEnd() {
 	unsigned char i, j;
 	for (i = 0; i < DISP_WIDTH; i++) {
 		for (j = 0; j < DISP_HEIGHT; j++) {
-			SetPixel(i, j, WHITE);
+			SetPixel(i, j, RED);
 		}
 	}
+	Pause(5000);
+	SetGameStage(STAGE_START);
 }
 
 void ChangeColorSnake() {
 
 	unsigned char i;
 
-	for(i = 0; i < snake.length; i++) {
+	for (i = 0; i < snake.length; i++) {
 		snake.pixels[i].color = food.color;
 	}
+}
+
+GameStage GetGameStage() {
+	return gameStage;
 }

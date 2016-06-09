@@ -41,17 +41,18 @@
 int main() {
     init_platform();
 
-    SetGameStage(STAGE_PLAY);
+    SetGameStage(STAGE_START);
 
 	unsigned int timer = 0;
 	while (1) {
 		if (timer == 10) {
 			timer = 0;
-			UpdateTerrain();
+			if(GetGameStage() != STAGE_START) {
+				UpdateTerrain();
+			}
 		} else {
 			timer++;
 		}
-
 
 		switch (GetJOY()) {
 		case JOY_DOWN:
@@ -74,7 +75,6 @@ int main() {
 
 		Pause(300);
 	}
-
 
     return 0;
 }
