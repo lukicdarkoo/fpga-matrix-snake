@@ -56,22 +56,22 @@ int main() {
 
 		switch (GetJOY()) {
 		case JOY_DOWN:
-			if(direction != DIRECTION_DOWN) {
+			if (direction != DIRECTION_DOWN) {
 				direction = DIRECTION_UP;
 			}
 			break;
 		case JOY_UP:
-			if(direction != DIRECTION_UP) {
+			if (direction != DIRECTION_UP) {
 				direction = DIRECTION_DOWN;
 			}
 			break;
 		case JOY_RIGHT:
-			if(direction != DIRECTION_RIGHT) {
+			if (direction != DIRECTION_RIGHT) {
 				direction = DIRECTION_LEFT;
 			}
 			break;
 		case JOY_LEFT:
-			if(direction != DIRECTION_LEFT) {
+			if (direction != DIRECTION_LEFT) {
 				direction = DIRECTION_RIGHT;
 			}
 			break;
@@ -81,7 +81,7 @@ int main() {
 			break;
 		}
 
-		Pause(300);
+		Pause(((defaultSpeed + 1) / 2) * 100);
 	}
 
     return 0;

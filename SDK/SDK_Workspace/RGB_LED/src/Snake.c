@@ -18,35 +18,28 @@ void UpdateTerrain() {
 	{
 	case DIRECTION_UP:
 		if (pixelHead.y == 0) {
-			GameEnd();
-			return;
-		}
-		else {
+			pixelHead.y = DISP_HEIGHT - 1;
+		} else {
 			pixelHead.y--;
 		}
 		break;
 	case DIRECTION_DOWN:
 		if (pixelHead.y == DISP_HEIGHT - 1) {
-			GameEnd();
-			return;
-		}
-		else {
+			pixelHead.y = 0;
+		} else {
 			pixelHead.y++;
 		}
 		break;
 	case DIRECTION_LEFT:
 		if (pixelHead.x == 0) {
-			GameEnd();
-			return;
-		}
-		else {
+			pixelHead.x = DISP_WIDTH - 1;
+		} else {
 			pixelHead.x--;
 		}
 		break;
 	case DIRECTION_RIGHT:
 		if (pixelHead.x == DISP_WIDTH - 1) {
-			GameEnd();
-			return;
+			pixelHead.x = 0;
 		}
 		else {
 			pixelHead.x++;
@@ -90,7 +83,7 @@ void SetGameStage(GameStage _stage) {
 	switch (_stage) {
 	case STAGE_START:
 		gameStage = STAGE_START;
-		PrintLetters(letters, 1, 2);
+		PrintLetters(letters, 0, -14);
 		break;
 	case STAGE_PLAY:
 		Clear();
@@ -106,10 +99,10 @@ void SetGameStage(GameStage _stage) {
 		// Snake
 		snake.pixels[0].x = 1;
 		snake.pixels[0].y = 1;
-		snake.pixels[0].color = BLUE;
+		snake.pixels[0].color = rand() % 7 + 1;
 		snake.pixels[1].x = 1;
 		snake.pixels[1].y = 1;
-		snake.pixels[1].color = BLUE;
+		snake.pixels[1].color = snake.pixels[0].color;
 		snake.length = 2;
 		break;
 	case STAGE_END:

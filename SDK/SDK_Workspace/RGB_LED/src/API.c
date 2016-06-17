@@ -69,7 +69,7 @@ void PrintLetter(char _letter, int x, int y) {
 	int i, j, letterIndex;
 
 	switch(_letter) {
-	case 's':
+	case 'S':
 		letterIndex = 0;
 		break;
 	case 't':
@@ -95,13 +95,13 @@ void PrintLetters(char* letters,int x, int y) {
 		/* x/2 will give letter to letter*/
 		PrintLetter(letters[0], x, y);
 		PrintLetter(letters[1], x, y-12);
-		PrintLetter(letters[2], x, y-24);
-		PrintLetter(letters[3], x, y-36);
-		PrintLetter(letters[4], x, y-48);
+		PrintLetter(letters[2], x, y-20);
+		PrintLetter(letters[3], x, y-30);
+		PrintLetter(letters[4], x, y-42);
 		y+=2;
-		/* (30 + 7 + 7) * 2 */
+		/* (6 + 4 + 5 + 6 + 4 + 7 + 7) * 2 */
 		if(y >= 64) {
-			y = -24;
+			y = -14;
 		}
 
 		Pause(1000);

@@ -18,7 +18,7 @@
 #define ERROR 0
 #define SUCCESS 1
 
-#define LETTER_WIDTH 6
+#define LETTER_WIDTH 8
 #define LETTER_NUMBER 5
 // RGB
 #define RED 0b100
@@ -43,41 +43,51 @@ typedef struct Pixel {
 	unsigned char color;
 } Pixel;
 
-
 static unsigned char letterMatrix[4][LETTER_WIDTH] = {
-		{											/* Letter S */
-				0b000000,
-				0b100110,
-				0b101001,
-				0b101001,
-				0b101001,
-				0b010001
+		{
+				0b00000000,							/* Letter S */
+				0b00000000,
+				0b01001100,
+				0b10010010,
+				0b10010010,
+				0b10010010,
+				0b01100010,
+				0b00000000
 		},
 		{
-				0b000000,							/* Letter T */
-				0b100000,
-				0b100000,
-				0b111111,
-				0b100000,
-				0b100000
+				0b00000000,
+				0b00000000,
+				0b00000000,							/* Letter T */
+				0b00000000,
+				0b00100010,
+				0b01111100,
+				0b00100000,
+				0b00000000
 		},
-		{											/* Letter A */
-				0b000000,
-				0b111111,
-				0b101000,
-				0b101000,
-				0b101000,
-				0b111111
+		{
+				0b00000000,							/* Letter A */
+				0b00000000,
+				0b00000000,
+				0b00011110,
+				0b00101010,
+				0b00101010,
+				0b00000100,
+				0b00000000,
 		},
 		{											/* Letter R */
-				0b000000,
-				0b111001,
-				0b101010,
-				0b101100,
-				0b101000,
-				0b111111
+				0b00000000,
+				0b00000000,
+				0b00010000,
+				0b00100000,
+				0b00100000,
+				0b00010000,
+				0b00111110,
+				0b00000000
 		}
 };
+
+static int defaultSpeed = 3; /* Speed can go from 0 to 6 */
+static int newSpeed;
 
 int SetPixelP(Pixel pixel);
 int SetPixel(unsigned char x, unsigned char y, unsigned char color);

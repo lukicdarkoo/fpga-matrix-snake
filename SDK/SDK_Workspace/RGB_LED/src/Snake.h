@@ -24,7 +24,7 @@ typedef enum GameStage {
 	STAGE_END
 } GameStage;
 
-static char letters[LETTER_NUMBER] = {'s', 't', 'a', 'r', 't'};
+static char letters[LETTER_NUMBER] = {'S', 't', 'a', 'r', 't'};
 
 Snake snake;
 Pixel food;
