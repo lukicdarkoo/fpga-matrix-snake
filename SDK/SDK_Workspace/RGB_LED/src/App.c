@@ -40,48 +40,70 @@
 
 int main() {
     init_platform();
-
+    GameStage gStage;
+    JOY joy;
     SetGameStage(STAGE_START);
 
 	unsigned int timer = 0;
 	while (1) {
 		if (timer == 10) {
 			timer = 0;
-			if(GetGameStage() != STAGE_START) {
+			if(GetGameStage() != STAGE_START && GetGameStage() != STAGE_SETSPEED) {
 				UpdateTerrain();
 			}
 		} else {
 			timer++;
 		}
 
+		gStage = GetGameStage();
+
 		switch (GetJOY()) {
+		case JOY_NONE:
+			isClicked = 0;
+			break;
 		case JOY_DOWN:
-			if (direction != DIRECTION_DOWN) {
-				direction = DIRECTION_UP;
+			if(isClicked == 0) {
+				if (direction != DIRECTION_DOWN) {
+					direction = DIRECTION_UP;
+				}
 			}
+			isClicked = 1;
 			break;
 		case JOY_UP:
-			if (direction != DIRECTION_UP) {
-				direction = DIRECTION_DOWN;
+			if (isClicked == 0) {
+				if (direction != DIRECTION_UP) {
+					direction = DIRECTION_DOWN;
+				}
 			}
+			isClicked = 1;
 			break;
 		case JOY_RIGHT:
-			if (direction != DIRECTION_RIGHT) {
-				direction = DIRECTION_LEFT;
+			if (isClicked == 0) {
+				if (direction != DIRECTION_RIGHT) {
+					direction = DIRECTION_LEFT;
+				}
 			}
+			isClicked = 1;
 			break;
 		case JOY_LEFT:
-			if (direction != DIRECTION_LEFT) {
-				direction = DIRECTION_RIGHT;
+			if (isClicked == 0) {
+				if (direction != DIRECTION_LEFT) {
+					direction = DIRECTION_RIGHT;
+				}
 			}
+			isClicked = 1;
 			break;
 
 		case JOY_SELECT:
-			SetGameStage(STAGE_PLAY);
+			if (isClicked == 0) {
+				if (gStage == STAGE_START) {
+					SetGameStage(STAGE_SETSPEED);
+				}
+			}
+			isClicked = 1;
 			break;
 		}
-
-		Pause(((defaultSpeed + 1) / 2) * 100);
+		Pause((newSpeed + 1) * 50);
 	}
 
     return 0;

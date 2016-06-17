@@ -4,6 +4,11 @@
 #include "API.h"
 #include <stdlib.h>
 
+typedef struct Snake {
+	Pixel pixels[DISP_WIDTH * DISP_HEIGHT];
+	unsigned char length;
+} Snake;
+
 typedef enum Direction {
 	DIRECTION_LEFT,
 	DIRECTION_RIGHT,
@@ -13,18 +18,12 @@ typedef enum Direction {
 }
 Direction;
 
-typedef struct Snake {
-	Pixel pixels[DISP_WIDTH * DISP_HEIGHT];
-	unsigned char length;
-} Snake;
-
 typedef enum GameStage {
 	STAGE_START,
+	STAGE_SETSPEED,
 	STAGE_PLAY,
 	STAGE_END
 } GameStage;
-
-static char letters[LETTER_NUMBER] = {'S', 't', 'a', 'r', 't'};
 
 Snake snake;
 Pixel food;

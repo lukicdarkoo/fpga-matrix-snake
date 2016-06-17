@@ -65,7 +65,7 @@ void Pause(unsigned int time) {
 	}
 }
 
-void PrintLetter(char _letter, int x, int y) {
+void PrintStartLetter(char _letter, int x, int y) {
 	int i, j, letterIndex;
 
 	switch(_letter) {
@@ -84,28 +84,146 @@ void PrintLetter(char _letter, int x, int y) {
 	}
 	for (i = 0; i < LETTER_WIDTH; i++) {
 		for (j = 0; j < LETTER_WIDTH; j++) {
-			SetPixel(i + y/2, j + x, getBit(letterMatrix[letterIndex][i], j) ? WHITE : BLACK);
+			SetPixel(i + y/2, j + x, getBit(startMatrix[letterIndex][i], j) ? WHITE : BLACK);
 		}
 	}
 }
 
-void PrintLetters(char* letters,int x, int y) {
-	while(GetJOY() != JOY_SELECT) {
-		Clear();
+void PrintStartLetters(char* letters,int x, int y) {
+	JOY joy = JOY_UNKNOWN;
+
+	Clear();
+
+	while(joy != JOY_SELECT) {
+		joy = GetJOY();
+		if(joy == JOY_SELECT) {
+			if(isClicked == 0) {
+				isClicked = 1;
+				break;
+			}
+		}
+		if (joy == JOY_NONE) {
+			isClicked = 0;
+		}
+
 		/* x/2 will give letter to letter*/
-		PrintLetter(letters[0], x, y);
-		PrintLetter(letters[1], x, y-12);
-		PrintLetter(letters[2], x, y-20);
-		PrintLetter(letters[3], x, y-30);
-		PrintLetter(letters[4], x, y-42);
+		PrintStartLetter(letters[0], x, y);
+		PrintStartLetter(letters[1], x, y-12);
+		PrintStartLetter(letters[2], x, y-20);
+		PrintStartLetter(letters[3], x, y-30);
+		PrintStartLetter(letters[4], x, y-42);
 		y+=2;
 		/* (6 + 4 + 5 + 6 + 4 + 7 + 7) * 2 */
 		if(y >= 64) {
 			y = -14;
 		}
 
-		Pause(1000);
+		Pause(700);
 	}
+}
+
+void PrintSpeedLetter(char _letter, int x, int y) {
+	int i, j, letterIndex;
+
+	switch(_letter) {
+	case 'S':
+		letterIndex = 0;
+		break;
+	case 'p':
+		letterIndex = 1;
+		break;
+	case 'e':
+		letterIndex = 2;
+		break;
+	case 'd':
+		letterIndex = 3;
+		break;
+	}
+	for (i = 0; i < LETTER_WIDTH; i++) {
+		for (j = 0; j < LETTER_WIDTH; j++) {
+			SetPixel(i + y/2, j + x, getBit(speedMatrix[letterIndex][i], j) ? WHITE : BLACK);
+		}
+	}
+}
+
+void PrintSpeedLetters(char* letters,int x, int y) {
+	Clear();
+
+	JOY joy = JOY_UNKNOWN;
+	while(1) {
+		joy = GetJOY();
+		if(joy == JOY_SELECT) {
+			if(isClicked == 0) {
+				isClicked = 1;
+				break;
+			}
+		}
+		if (joy == JOY_NONE) {
+			isClicked = 0;
+		}
+		PrintSpeedLetter(letters[0], x, y);
+		PrintSpeedLetter(letters[1], x, y-12);
+		PrintSpeedLetter(letters[2], x, y-24);
+		PrintSpeedLetter(letters[3], x, y-34);
+		PrintSpeedLetter(letters[4], x, y-44);
+		y+=2;
+		/* (6 + 6 + 5 + 5 + 6 + 7 + 7) * 2 */
+		if(y >= 70) {
+			y = -14;
+		}
+
+		Pause(700);
+	}
+}
+
+void PrintSpeed(int speed) {
+	int i;
+	Clear();
+	for(i = 0; i < speed + 1; i++) {
+		SetPixel(7 - (i + 1), 3, RED);
+	}
+}
+
+int SetSpeed(int speed) {
+	JOY joy = JOY_UNKNOWN;
+	int ns = speed;
+
+	PrintSpeedLetters(speedLetters, 0, -14);
+
+	while(1) {
+
+		joy = GetJOY();
+		PrintSpeed(ns);
+
+		if(joy == JOY_SELECT) {
+			if(isClicked == 0) {
+				isClicked = 1;
+				break;
+			}
+		}
+		if (joy == JOY_RIGHT) {
+			if(isClicked == 0) {
+				if (ns != 5) {
+					ns++;
+				}
+				isClicked = 1;
+			}
+		}
+		if (joy == JOY_LEFT) {
+			if(isClicked == 0) {
+				if (ns != 0) {
+					ns--;
+				}
+				isClicked = 1;
+			}
+		}
+		if (joy == JOY_NONE) {
+			isClicked = 0;
+		}
+		Pause(100);
+	}
+
+	return 6 - ns;
 }
 
 short getBit(short value, short position) {

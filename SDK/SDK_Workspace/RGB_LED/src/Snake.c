@@ -83,7 +83,13 @@ void SetGameStage(GameStage _stage) {
 	switch (_stage) {
 	case STAGE_START:
 		gameStage = STAGE_START;
-		PrintLetters(letters, 0, -14);
+		PrintStartLetters(startLetters, 0, -14);
+		break;
+	case STAGE_SETSPEED:
+		Clear();
+		gameStage = STAGE_SETSPEED;
+		newSpeed = SetSpeed(defaultSpeed);
+		SetGameStage(STAGE_PLAY);
 		break;
 	case STAGE_PLAY:
 		Clear();

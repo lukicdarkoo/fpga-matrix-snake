@@ -43,7 +43,10 @@ typedef struct Pixel {
 	unsigned char color;
 } Pixel;
 
-static unsigned char letterMatrix[4][LETTER_WIDTH] = {
+static char startLetters[LETTER_NUMBER] = {'S', 't', 'a', 'r', 't'};
+static char speedLetters[LETTER_NUMBER] = {'S', 'p', 'e', 'e', 'd'};
+
+static unsigned char startMatrix[4][LETTER_WIDTH] = {
 		{
 				0b00000000,							/* Letter S */
 				0b00000000,
@@ -86,16 +89,64 @@ static unsigned char letterMatrix[4][LETTER_WIDTH] = {
 		}
 };
 
-static int defaultSpeed = 3; /* Speed can go from 0 to 6 */
-static int newSpeed;
+static unsigned char speedMatrix[4][LETTER_WIDTH] = {
+		{
+				0b00000000,							/* Letter S */
+				0b00000000,
+				0b01001100,
+				0b10010010,
+				0b10010010,
+				0b10010010,
+				0b01100010,
+				0b00000000
+		},
+		{
+				0b00000000,
+				0b00000000,
+				0b00011000,							/* Letter P */
+				0b00100100,
+				0b00100100,
+				0b00011000,
+				0b00111111,
+				0b00000000
+		},
+		{
+				0b00000000,							/* Letter E */
+				0b00000000,
+				0b00000000,
+				0b00010010,
+				0b00101010,
+				0b00101010,
+				0b00011100,
+				0b00000000,
+		},
+		{											/* Letter D */
+				0b00000000,
+				0b00000000,
+				0b11111110,
+				0b00010100,
+				0b00100010,
+				0b00100010,
+				0b00011100,
+				0b00000000
+		}
+};
+
+int newSpeed;
+static int defaultSpeed = 3;
+static unsigned char isClicked = 0;
 
 int SetPixelP(Pixel pixel);
 int SetPixel(unsigned char x, unsigned char y, unsigned char color);
 JOY GetJOY();
 void Clear();
 void Pause(unsigned int time);
-void PrintLetter(char letter, int x, int y);
-void PrintLetters(char* letters, int x, int y);
+void PrintStartLetter(char _letter, int x, int y);
+void PrintSpeedLetter(char _letter, int x, int y);
+void PrintStartLetters(char* letters, int x, int y);
+void PrintSpeedLetters(char* letters, int x, int y);
+int SetSpeed(int speed);
+void PrintSpeed(int speed);
 short getBit(short value, short position);
 
 #endif /* API_H_ */
